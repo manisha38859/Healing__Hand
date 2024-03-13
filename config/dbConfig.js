@@ -12,4 +12,8 @@ connection.on("error", (error) => {
     console.log("Error in MongoDB connection", error);
 });
 
+// var cursor = connection.db.collection('patients').find();
+//console.log(connection);
+
 module.exports = mongoose;
+  
