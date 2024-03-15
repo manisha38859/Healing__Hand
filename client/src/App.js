@@ -11,6 +11,7 @@ import { useSelector } from "react-redux"
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import ApplyDoctor from './pages/ApplyDoctor'
+console.log("hello")
 function App() {
   const {loading} = useSelector(state => state.alerts);
   return (
