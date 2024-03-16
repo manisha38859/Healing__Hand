@@ -1,90 +1,100 @@
-import { Tabs, notification } from 'antd';
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import Layout from '../components/Layout';
+import React from 'react'
+import Layout from '../components/Layout'
+import {Tabs} from 'antd'
+import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from "axios";
+import toast from 'react-hot-toast';
 import { hideLoading, showLoading } from '../redux/alertsSlice';
-import  toast  from 'react-hot-toast';
-import { setUser } from '../redux/userSlice';
+import { setUser } from "../redux/userSlice";
 
-function Notifications() {
-    const {user} =useSelector((state) => state.user);
+
+
+function Notifications(){
+    const {user} = useSelector((state) => state.user);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const markAllAsSeen=async()=>{
-        // console.log("markallseen starting")
-        try{
-            // console.log("notifications")
+        try {
             dispatch(showLoading());
-            const response = await axios.post('/api/user/mark-all-notifications-as-seen', {userId : user._id}, {
-                headers: {
-                    Authorization : `Bearer ${localStorage.getItem('token')}`
-                }
-            });
+            console.log("before posting")
+            const token = localStorage.getItem("token");
+            console.log("Token:", token); 
+           //console.log(user._id)mark-all-notifications-as-seen
+           const response = await axios.post('/api/user/mark-all-notifications-as-seen', { userId: user._id }, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+        });
+            console.log("hel")
             dispatch(hideLoading());
             if (response.data.success) {
                 toast.success(response.data.message);
-                dispatch(setUser(response.data.message));
+                // toast("Redirecting to login page");
+                // navigate("/login");
+                dispatch(setUser(response.data.data));
+            } else {
+                toast.error(response.data.message);
             }
-            else{
-              toast.error(response.data.message);
-            }
-        }catch(error){
+        } catch (error) {
             dispatch(hideLoading());
-            toast.error("Something went wrong");
+            toast.error('Something went wrong');
         }
     }
-    
-    const deleteAll=async()=>{
-        try{
+    const deleteAll = async()=>{
+        try {
             dispatch(showLoading());
-            const response = await axios.post('/api/user/delete-all-notifications', {userId : user._id}, {
+            const response = await axios.post('/api/user/delete-all-notifications', { userId: user._id }, {
                 headers: {
-                    Authorization : `Bearer ${localStorage.getItem('token')}`
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
                 }
             });
             dispatch(hideLoading());
             if (response.data.success) {
                 toast.success(response.data.message);
-                dispatch(setUser(response.data.message));
+                // toast("Redirecting to login page");
+                // navigate("/login");
+                dispatch(setUser(response.data.data));
+            } else {
+                toast.error(response.data.message);
             }
-            else{
-              toast.error(response.data.message);
-            }
-        }catch(error){
+        } catch (error) {
             dispatch(hideLoading());
-            toast.error("Something went wrong");
+            toast.error('Something went wrong');
         }
     }
 
-  return (
-    <Layout>
-        <h1 className='page-title'> Notifications</h1>
-        <Tabs>
-            <Tabs.TabPane tab='Unseen' key={0}>
-                <div className='d-flex justify-content-end'>
-                    <h1 className='anchor' onClick={()=>markAllAsSeen()}>Mark all as seen</h1>
-                </div>
-                {user && user.unseenNotifications && user.unseenNotifications.map((notification)=>(
-                    <div className='card p-2' onClick={()=>navigate(notification.onClickPath)}>
-                        <div className='card-text'>{notification.message}</div>
+
+    return (
+        <Layout>
+            <h1 className='page-title'>Notifications</h1>
+
+            <Tabs>
+                <Tabs.TabPane tab='unseen' key={0}>
+                    <div className="d-flex justify-content-end">
+                        <h1 className='anchor' onClick={()=>markAllAsSeen()}>Mark all as seen</h1>
                     </div>
-                ))}
-            </Tabs.TabPane>
-            <Tabs.TabPane tab='Seen' key={1}>
-               <div className='d-flex justify-content-end'>
-                    <h1 className='anchor' onClick={()=>deleteAll()}>delete All</h1>
-                </div>
-                {user && user.seenNotifications && user.seenNotifications.map((notification) => (
-                    <div className='card p-2' onClick={()=>navigate(notification.onClickPath)}>
-                        <div className='card-text'>{notification.message}</div>
+
+                    {user?.unseenNotifications.map((notification) => (
+                        <div className='card p-2' onClick={() => navigate(notification.onClickPath)}>
+                            <div className='card-text'>{notification.message}</div>
+                        </div>
+                    ))}
+                </Tabs.TabPane>
+                <Tabs.TabPane tab='seen' key={1}>
+                <div className="d-flex justify-content-end">
+                        <h1 className="anchor" onClick={()=>deleteAll()}>Delete all</h1>
+
                     </div>
-                ))}
-            </Tabs.TabPane>
-        </Tabs>
-    </Layout>
-  );
+                    {user?.seenNotifications.map((notification) => (
+                        <div className='card p-2' onClick={() => navigate(notification.onClickPath)}>
+                            <div className='card-text'>{notification.message}</div>
+                        </div>
+                    ))}
+                </Tabs.TabPane>
+            </Tabs>
+        </Layout>
+    )
 }
 
 export default Notifications
