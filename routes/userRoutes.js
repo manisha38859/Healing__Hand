@@ -6,7 +6,8 @@ const Appointment = require('../models/appointmentModel');
 const bcrypt = require("bcryptjs");
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middlewares/authMiddleware');
-const moment = require('moment')
+const moment = require('moment');
+// const { default: UserProfile } = require('../client/src/pages/User/UserProfile');
 
 router.post('/register', async (req, res) => {
     try {
@@ -67,7 +68,8 @@ router.post('/login', async (req, res) => {
 router.post('/get-user-info-by-id', authMiddleware, async (req,res) => {
 
     try {
-        const user = await User.findOne({ _id: req.body.userId });
+        const user = await User.findOne({ _id: req.body.userId});
+        console.log(user)
         user.password = undefined;
         if (!user) {
             return res
@@ -86,6 +88,34 @@ router.post('/get-user-info-by-id', authMiddleware, async (req,res) => {
     }
 
 });
+
+router.post('/update-user-profile', authMiddleware, async (req, res) => {
+    try {
+        console.log(req.body);
+        const updateData = {
+            name: req.body.userName,
+            email: req.body.userEmail
+        };
+        const user = await User.findOneAndUpdate(
+            { _id: req.body.userId },
+            updateData,
+            { new: true }
+        ).select('-password');
+        console.log("Updated User:", user);
+        res.status(200).send({ 
+            success: true,
+            message: "User profile updated successfully",
+            data: user
+        });
+    } catch (error) {
+        res.status(500).send({ 
+            message: "Error updating user profile", 
+            success: false, 
+            error 
+        });
+    }
+});
+
 
 router.post('/apply-doctor-account', authMiddleware , async (req, res) => {
     try {
