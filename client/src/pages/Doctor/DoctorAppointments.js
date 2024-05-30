@@ -1,56 +1,79 @@
-import React from 'react'
-import { coloumns, Table } from 'antd'
-import { useDispatch } from 'react-redux'
-import Layout from '../../components/Layout'
-import { showLoading, hideLoading } from '../../redux/alertsSlice'
-import axios from 'axios'
-//import toast from 'react-hot-toast';
-import { useState, useEffect } from 'react'
-//import { response } from 'express'
-import moment from 'moment'
+import React, { useState, useEffect } from 'react';
+import { Table, Button, message } from 'antd';
+import { useDispatch } from 'react-redux';
+import Layout from '../../components/Layout';
+import { showLoading, hideLoading } from '../../redux/alertsSlice';
+import axios from 'axios';
+import moment from 'moment';
 
 function DoctorAppointments() {
-    const [appointments, setAppointments] = useState([])
-    const dispatch = useDispatch()
+    const [appointments, setAppointments] = useState([]);
+    const dispatch = useDispatch();
+
     const getAppointmentsData = async () => {
         try {
-            dispatch(showLoading())
+            dispatch(showLoading());
             const response = await axios.get('/api/doctor/get-appointments-by-doctor-id', {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`
                 }
-            })
+            });
 
-            dispatch(hideLoading())
+            dispatch(hideLoading());
             if (response.data.success) {
-                setAppointments(response.data.data)
-                //getDoctorsData();
+                setAppointments(response.data.data);
             }
         } catch (error) {
-            dispatch(hideLoading())
-            console.log(error)
+            dispatch(hideLoading());
+            console.log(error);
         }
-    }
+    };
 
     const changeAppointmentStatus = async (record, status) => {
         try {
-            dispatch(showLoading())
-            const response = await axios.post('/api/doctor/change-appointment-status', {appointmentId: record._id, status: status}, {
+            dispatch(showLoading());
+            const response = await axios.post('/api/doctor/change-appointment-status', {
+                appointmentId: record._id,
+                status: status
+            }, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`
                 }
-            })
+            });
 
-            dispatch(hideLoading())
+            dispatch(hideLoading());
             if (response.data.success) {
-                console.log(response.data.message)
+                console.log(response.data.message);
                 getAppointmentsData();
             }
         } catch (error) {
-            console.log("Error changing doctor account status")
-            dispatch(hideLoading())
+            console.log("Error changing doctor account status");
+            dispatch(hideLoading());
         }
-    }
+    };
+
+    const deleteOutdatedAppointments = async () => {
+        try {
+            dispatch(showLoading());
+            const response = await axios.post('/api/doctor/delete-outdated-appointments', {}, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                }
+            });
+
+            dispatch(hideLoading());
+            if (response.data.success) {
+                message.success(response.data.message);
+                getAppointmentsData(); 
+            } else {
+                message.error(response.data.message);
+            }
+        } catch (error) {
+            dispatch(hideLoading());
+            message.error('Something went wrong');
+            console.log(error);
+        }
+    };
 
     const columns = [
         {
@@ -67,11 +90,11 @@ function DoctorAppointments() {
             ),
         },
         {
-            title: 'Phone',
-            dataIndex: 'phoneNumber',
+            title: 'Email',
+            dataIndex: 'email',
             render: (text, record) => (
                 <span className='normal-text'>
-                    {record.userInfo?.phoneNumber || 'N/A'}
+                    {record.userInfo?.email || 'N/A'}
                 </span>
             ),
         },
@@ -92,11 +115,11 @@ function DoctorAppointments() {
             title: 'Actions',
             dataIndex: 'actions',
             render: (text, record) => (
-
                 <div className='d-flex'>
                     {record.status === 'pending' && (
-                        <div className='d-flex'> <h1 className='anchor px-2' onClick={() => changeAppointmentStatus(record, 'approved')}>Approve  </h1>
-                            <h1 className='anchor' onClick={() => changeAppointmentStatus(record, 'rejected')}>  Reject</h1>
+                        <div className='d-flex'>
+                            <h1 className='anchor px-2' onClick={() => changeAppointmentStatus(record, 'approved')}>Approve</h1>
+                            <h1 className='anchor' onClick={() => changeAppointmentStatus(record, 'rejected')}>Reject</h1>
                         </div>
                     )}
                 </div>
@@ -104,18 +127,19 @@ function DoctorAppointments() {
         },
     ];
 
-
     useEffect(() => {
         getAppointmentsData();
     }, []);
 
-
     return (
         <Layout>
-            <h1 className='page-loader'>Appointments</h1>
+            <div className="d-flex justify-content-between align-items-center">
+                <h1 className='page-title'>Appointments</h1>
+                <Button type="primary" onClick={deleteOutdatedAppointments}>Delete Outdated Appointments</Button>
+            </div>
             <Table columns={columns} dataSource={appointments} />
         </Layout>
-    )
+    );
 }
 
 export default DoctorAppointments;

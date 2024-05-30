@@ -4,6 +4,7 @@ const User = require("../models/userModel");
 const Doctor = require("../models/doctorModel")
 const Appointment = require('../models/appointmentModel');
 const authMiddleware = require("../middlewares/authMiddleware")
+const moment = require('moment')
 
 router.post('/get-doctor-info-by-user-id', authMiddleware, async (req, res) => {
 
@@ -110,5 +111,28 @@ router.post('/change-appointment-status', authMiddleware , async (req, res) => {
         }
     
 });
+
+router.post('/delete-outdated-appointments', authMiddleware, async (req, res) => {
+    try {
+        const now = moment().toISOString();
+
+        const allAppointments = await Appointment.find();
+    //    console.log('All appointments:', allAppointments);
+        const result = await Appointment.deleteMany({ date: { $lt: now } });
+
+        res.status(200).send({
+            success: true,
+            message: 'Outdated appointments deleted successfully'
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            success: false,
+            message: 'Error deleting outdated appointments',
+            error
+        });
+    }
+});
+
 
 module.exports = router;

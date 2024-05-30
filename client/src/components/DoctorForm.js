@@ -9,7 +9,7 @@ function DoctorForm({ onFinish, initivalValues}) {
             ...(initivalValues && {
                 timings:[
                     moment(initivalValues?.timings[0],'HH:mm'),
-                    moment(initivalValues?.timings[1],'HH:mm')
+                    moment(initivalValues?.timings[1],'HH:mm'),
                 ],
             }),
         }}>

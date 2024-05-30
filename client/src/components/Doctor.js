@@ -8,6 +8,10 @@ function Doctor({doctor}) {
             <h1 className='card-title'>{doctor.firstName} {doctor.lastName}</h1>
             <hr/>
             <p>
+                <b>Specialization : </b>
+                {doctor.specialization}
+            </p>
+            <p>
                 <b>Phone Number : </b>
                 {doctor.phoneNumber}
             </p>

@@ -86,4 +86,77 @@ router.post('/change-doctor-account-status', authMiddleware , async (req, res) =
         }
     
 });
+
+router.post('/change-user-status', async (req, res) => {
+    const { userId, status } = req.body;
+
+    try {
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        user.status = status;
+       
+        await user.save();
+
+        return res.status(200).json({ success: true, message: `User status updated to ${status}` });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Error updating user status' });
+    }
+});
+
+router.post('/clear-blocked-doctors', async (req, res) => {
+    try {
+      const result = await Doctor.deleteMany({ status: 'blocked' });
+  
+      if (result.deletedCount > 0) {
+        return res.status(200).json({
+          success: true,
+          message: 'Blocked doctors cleared successfully.',
+        });
+      } else {
+        return res.status(200).json({
+          success: false,
+          message: 'No blocked doctors found.',
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error. Failed to clear blocked doctors.',
+        error: error.message,
+      });
+    }
+  });
+
+  router.post('/clear-blocked-users', async (req, res) => {
+    try {
+      const result = await User.deleteMany({ status: 'blocked' });
+  
+      if (result.deletedCount > 0) {
+        return res.status(200).json({
+          success: true,
+          message: 'Blocked users cleared successfully.',
+        });
+      } else {
+        return res.status(200).json({
+          success: false,
+          message: 'No blocked users found.',
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error. Failed to clear blocked users.',
+        error: error.message,
+      });
+    }
+  });
 module.exports = router;
+
+

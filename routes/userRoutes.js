@@ -219,7 +219,6 @@ router.post('/book-appointment', authMiddleware , async (req, res) => {
         req.body.time = moment(req.body.time, 'HH:mm').toISOString();
         const newAppointment = new Appointment(req.body);
         await newAppointment.save();
-        //pushing notification to doctor based on his userid
         const user = await User.findOne({_id: req.body.doctorInfo.userId});
         user.unseenNotifications.push({
             type: "new-appointment-request",
@@ -242,48 +241,67 @@ router.post('/book-appointment', authMiddleware , async (req, res) => {
     
 });
 
-router.post('/check-booking-availability', authMiddleware , async (req, res) => {
-    //console.log("get all doctors")
-    try { 
-        console.log(req.body.date);
-        const date = moment(req.body.date,'DD-MM-YYYY').toISOString();
-        //const date = moment(req.body.date,'DD-MM-YYYY');
-       // console.log(date);
-        const fromTime = moment(req.body.time,'HH:mm').subtract(1,'hours').toISOString();
-        const toTime = moment(req.body.time,'HH:mm').add(1,'hours').toISOString();
-        const doctorId = req.body.doctorId;
-        console.log(fromTime);
-        console.log(toTime);
+router.post('/check-booking-availability', authMiddleware, async (req, res) => {
+    try {
+        const { date: dateString, time: timeString, doctorId } = req.body;
+
+        const date = moment(dateString, 'DD-MM-YYYY');
+        const now = moment();
+        
+        if (date.isBefore(now, 'day')) {
+            return res.status(200).send({
+                message: "Date cannot be in the past",
+                success: false,
+            });
+        }
+
+        const time = moment(timeString, 'HH:mm');
+        const fromTime = time.clone().subtract(1, 'hours');
+        const toTime = time.clone().add(1, 'hours');
+        const doctor = await Doctor.findById(doctorId);
+        if (!doctor) {
+            return res.status(200).send({
+                message: "Doctor not found",
+                success: false,
+            });
+        }
+
+        const workStartTime = moment(doctor.timings[0], 'HH:mm');
+        const workEndTime = moment(doctor.timings[1], 'HH:mm');
+
+        if (!time.isBetween(workStartTime, workEndTime, null, '[]')) {
+            return res.status(200).send({
+                message: "Chosen time is outside doctor's working hours",
+                success: false,
+            });
+        }
+
         const appointments = await Appointment.find({
             doctorId,
-            date,
-            time: {$gte: fromTime, $lte: toTime},
+            date: date.toISOString(),
+            time: { $gte: fromTime.toISOString(), $lte: toTime.toISOString() },
             status: "approved"
         });
-        for (const appointment of appointments) {
-            console.log(appointment.date);
-            console.log(appointment.doctorId);
-        }
-        if(appointments.length>0) {
+
+        if (appointments.length > 0) {
             return res.status(200).send({
                 message: "Appointment not available",
                 success: false,
-            })
+            });
         } else {
             return res.status(200).send({
                 message: "Appointment available",
                 success: true,
-            })
+            });
         }
     } catch (error) {
-        console.log(error)
-        res.status(500)
-            .send({ message: "Error in booking appointment" , 
+        console.log(error);
+        res.status(500).send({
+            message: "Error in booking appointment",
             success: false,
-             error,
-         });
-        }
-    
+            error,
+        });
+    }
 });
 
 router.get('/get-appointments-by-user-id', authMiddleware , async (req, res) => {

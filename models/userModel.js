@@ -30,7 +30,11 @@ const userSchema = new mongoose.Schema({
     unseenNotifications:{
         type: Array,
         default: [],
-    }
+    },
+    status: {
+        type: String,
+        default: "active",
+   }
     
 },{
     timestamps: true
